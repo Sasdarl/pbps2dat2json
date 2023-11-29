@@ -1,5 +1,5 @@
 # pbps2dat2json
-A Python 3.4 script capable of converting DAT (overlay data) files in JoJo's Bizarre Adventure: Phantom Blood (PS2) into JSON and back.
+A Python 3.4+ script capable of converting DAT (overlay data) files in JoJo's Bizarre Adventure: Phantom Blood (PS2) into JSON and back.
 
 Optional parameters:
 
