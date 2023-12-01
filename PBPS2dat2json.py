@@ -280,11 +280,6 @@ elif args.inpath.endswith(".json"): # DAT output is assumed
         input_file_buffer = bytearray( input_file.read() )
         output_dat = JSONtoDAT(input_file_buffer)
         outpath = (f"{Path(args.inpath).stem}_output.dat")
-        if args.outpath:
-            outpath = (f"{Path(args.outpath)}")
-            with open(outpath, "wb") as outfile:
-                for byte in output_dat:
-                    outfile.write(byte)
         if args.sourcefile and args.sourceoffset: # Reinsertion, particularly into BTR
             outpath = (f"{Path(args.sourcefile).stem}_output{Path(args.sourcefile).suffix}")
             if args.outpath:
