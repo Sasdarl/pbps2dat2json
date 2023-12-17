@@ -1,8 +1,5 @@
-import os
-import sys
 import struct
 import argparse
-import subprocess
 import json
 import shutil
 
@@ -53,7 +50,6 @@ def encodeRender(array): # Used for render flags
 
 def find_DAT(buf): # Used for BTR files. It's used on regular DAT files too but immediately finds its target
     MAGIC = bytearray((int(0x21), int(0x01), int(0xF0), int(0xFF))) # We're just searching for this
-    offsets = []
     
     off_start = 0x0
     off_end = len(buf)
@@ -63,16 +59,22 @@ def find_DAT(buf): # Used for BTR files. It's used on regular DAT files too but 
         offset = buf.find(MAGIC, off_start, off_end)
         
         if offset == -1:
-            exit = True
+            if buf[0:8] == bytearray([0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00]):
+                return 0
+            else:
+                exit = True
         else:
             return offset # Integer
     
     return -1
 
 def DATtoJSON(buf):
-    offset = 0x0C
-    emptydict = {}
     dict = {}
+    if buf[0:8] == bytearray([0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00]):
+        offset = 0x08
+        dict["headerMagic"] = 0
+    else:
+        offset = 0x0C
     dict["textures"] = [] # Python's JSON module is a godsend
     dict["groups"] = []
     for i in range(ru32(buf,0x04)): # Textures
@@ -88,7 +90,7 @@ def DATtoJSON(buf):
         for j in range(3):
             group["metadata"][j] = ruFloat(buf,offset+4+j*4) # I don't know what these do but there they are
         offset += 0x10
-        if ru32(buf,offset) >= 1:
+        if ru32(buf,offset) >= 1 and group["metadata"] != [0, 0, 0]:
             offset += 0x08
             group["voiceLines"] = []
             for j in range(ru32(buf,offset-4)):
@@ -168,8 +170,8 @@ def DATtoJSON(buf):
 def JSONtoDAT(buf):
     data = json.loads(buf) # Load the dictionary
     NewDAT = []
-    if "headerMagic" not in data or data["headerMagic"] != 0: # Compatibility with prerelease versions.
-        NewDAT.append(wu32(0xFFF00121)) # I don't recall if any examples of magic-less DAT files actually exist
+    if "headerMagic" not in data or data["headerMagic"] != 0:
+        NewDAT.append(wu32(0xFFF00121)) # DAT files for attack portraits do not have this
     NewDAT.append(wu32(len(data["textures"])))
     NewDAT.append(wu32(len(data["groups"])))
 
