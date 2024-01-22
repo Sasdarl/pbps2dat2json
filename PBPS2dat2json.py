@@ -145,19 +145,17 @@ def DATtoJSON(buf):
                 for k in range(ru32(buf,offset-4)):
                     effect = {}
                     effect["effectType"] = ru32(buf,offset) # Mess around and learn what for
-                    if ru32(buf,offset+4) >= 1:
-                        effect["effectKeyframes"] = []
-                        offset += 12
-                        for l in range(ru32(buf,offset-4)):
-                            keyframe = []
-                            keyValueCount = ru32(buf,offset+4) # This is set by keyframe in the file itself (why?)
-                            keyframe.append(ruFloat(buf,offset))
-                            for m in range(keyValueCount):
-                                keyframe.append(ruFloat(buf,offset+8+m*4))
-                            offset += 8+keyValueCount*4
-                            effect["effectKeyframes"].append(keyframe)
-                    else:
-                        offset += 8
+                    effect["effectKeyframes"] = []
+                    effect["effectSubType"] = ru32(buf,offset+4)
+                    offset += 12
+                    for l in range(ru32(buf,offset-4)):
+                        keyframe = []
+                        keyValueCount = ru32(buf,offset+4) # This is set by keyframe in the file itself (why?)
+                        keyframe.append(ruFloat(buf,offset))
+                        for m in range(keyValueCount):
+                            keyframe.append(ruFloat(buf,offset+8+m*4))
+                        offset += 8+keyValueCount*4
+                        effect["effectKeyframes"].append(keyframe)
                     overlay["effects"].append(effect) # Chain everything together
             else:
                 offset += 4
@@ -227,7 +225,10 @@ def JSONtoDAT(buf):
                 for effect in overlay["effects"]:
                     NewDAT.append(wu32(effect["effectType"]))
                     if "effectKeyframes" in effect: # If there aren't keyframes, lockpicks won't work
-                        NewDAT.append(wu32(1))
+                        if "effectSubType" in effect:
+                            NewDAT.append(wu32(effect["effectSubType"]))
+                        else:
+                            NewDAT.append(wu32(1))
                         NewDAT.append(wu32(len(effect["effectKeyframes"])))
                         for keyframe in effect["effectKeyframes"]:
                             NewDAT.append(wuFloat(keyframe[0]))
